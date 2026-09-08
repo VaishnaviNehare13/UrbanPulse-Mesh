@@ -1,6 +1,6 @@
 import React from 'react';
 import { Polyline, Tooltip, Popup } from 'react-leaflet';
-import { PUNE_ROADS } from '../../data/puneMapData';
+import { PUNE_ROAD_CORRIDORS_GEOJSON } from '../../data/geo/puneRoadCorridors';
 
 export default function RouteOverlay({ 
   showRoads, 
@@ -12,51 +12,53 @@ export default function RouteOverlay({
 }) {
   if (!showRoads) return null;
 
-  // Diversion coordinates: JM Road connecting to Shivaji Road / Senapati Bapat
+  // Single Restrained Diversion Corridor: JM Road bypass via Sancheti & Shivaji Road
   const diversionCoords = [
-    [18.5165, 73.8405], // Deccan
-    [18.5220, 73.8440], // JM Road
-    [18.5280, 73.8485], 
-    [18.5312, 73.8525], // Sancheti
-    [18.5310, 73.8550], // PMC / Shivaji Rd
+    [18.5165, 73.8405], // Deccan Gymkhana
+    [18.5220, 73.8440], // JM Road / Sambhaji Park
+    [18.5280, 73.8485], // Balgandharva
+    [18.5312, 73.8525], // Sancheti Chowk
+    [18.5310, 73.8550], // PMC / Shivaji Road
     [18.5220, 73.8555]  // Shaniwar Wada
   ];
 
   return (
     <>
-      {/* Base Pune Road Network */}
-      {PUNE_ROADS.map((road) => {
-        const isSelected = selectedRoad?.id === road.id;
-        const isFCRoad = road.id === 'RD-FC';
-        
-        let color = '#64748b'; // Muted grey baseline
-        let weight = road.class.includes('National') || road.class.includes('Primary') ? 3.5 : 2.5;
-        let opacity = 0.55;
+      {/* Real Major Road Corridors - Restrained Thin Muted Lines */}
+      {PUNE_ROAD_CORRIDORS_GEOJSON.features.map((feature) => {
+        const isSelected = selectedRoad?.id === feature.id;
+        const isFCRoad = feature.id === 'RD-FC';
+        const coords = feature.geometry.coordinates.map(c => [c[1], c[0]]);
 
+        // Default: thin muted neutral corridor line
+        let color = '#64748b';
+        let weight = 2.0;
+        let opacity = 0.45;
+
+        // If traffic flow is toggled on, show subtle operational status only
         if (showTraffic) {
-          if (road.trafficStatus === 'critical') {
-            color = '#dc2626';
+          if (isFCRoad) {
+            color = '#dc2626'; // Incident corridor
+            weight = 3.2;
             opacity = 0.85;
-            weight = 3.5;
-          } else if (road.trafficStatus === 'moderate') {
-            color = '#d97706';
-            opacity = 0.7;
-          } else {
-            color = '#16a34a';
-            opacity = 0.6;
+          } else if (feature.id === 'RD-JM') {
+            color = '#d97706'; // Moderate / Attention
+            weight = 2.5;
+            opacity = 0.65;
           }
         }
 
+        // Highlight selected corridor
         if (isSelected) {
           color = '#2563eb';
-          opacity = 1;
-          weight = weight + 1.5;
+          weight = 3.5;
+          opacity = 1.0;
         }
 
         return (
           <Polyline
-            key={road.id}
-            positions={road.coordinates}
+            key={feature.id}
+            positions={coords}
             pathOptions={{
               color: color,
               weight: weight,
@@ -65,50 +67,48 @@ export default function RouteOverlay({
               lineJoin: 'round'
             }}
             eventHandlers={{
-              click: () => onSelectRoad && onSelectRoad(road)
+              click: () => onSelectRoad && onSelectRoad(feature.properties)
             }}
           >
             <Tooltip sticky direction="top" className="text-xs font-sans">
-              <span className="font-semibold text-slate-900">{road.name}</span>
-              <span className="text-[10px] text-slate-500 block">{road.class} • {road.corridor}</span>
+              <span className="font-semibold text-slate-900">{feature.properties.name}</span>
+              <span className="text-[10px] text-slate-500 block">{feature.properties.class} • {feature.properties.lengthKm} km</span>
             </Tooltip>
 
             <Popup className="gis-popup">
               <div className="p-3 max-w-[240px] text-slate-800 text-xs select-none">
                 <div className="flex items-center justify-between pb-1 border-b border-slate-200">
                   <span className="font-mono text-[10px] font-bold text-slate-500 uppercase">
-                    ROAD SEGMENT
+                    ROAD CORRIDOR
                   </span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded uppercase ${
-                    road.trafficStatus === 'critical' ? 'bg-red-100 text-red-700' :
-                    road.trafficStatus === 'moderate' ? 'bg-amber-100 text-amber-700' :
-                    'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    {road.trafficStatus}
+                  <span className="text-[10px] font-mono text-slate-400">
+                    PUNE GIS
                   </span>
                 </div>
 
                 <div className="mt-2 space-y-1">
-                  <h4 className="font-bold text-slate-900 text-xs leading-snug">{road.name}</h4>
-                  <div className="text-[11px] text-slate-500">{road.corridor}</div>
-                  
-                  <div className="pt-1.5 space-y-1 text-[11px] text-slate-700">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Congestion:</span>
-                      <span className="font-semibold text-slate-800">{road.congestion}%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Average Speed:</span>
-                      <span className="font-semibold text-slate-800">{road.averageSpeed}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Sector:</span>
-                      <span className="text-slate-800">{road.affectedSector}</span>
-                    </div>
-                  </div>
+                  <h4 className="font-bold text-slate-900 text-xs leading-snug">{feature.properties.name}</h4>
+                  <div className="text-[11px] text-slate-500">{feature.properties.corridor}</div>
 
-                  <div className="text-[9px] text-slate-400 italic pt-1 text-right">
-                    SIMULATED DATA
+                  <div className="pt-1.5 space-y-1 text-[11px] text-slate-700 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Corridor Length:</span>
+                      <span className="font-medium text-slate-800">{feature.properties.lengthKm} km</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Carriageway Lanes:</span>
+                      <span className="font-medium text-slate-800">{feature.properties.lanes} Lanes</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Ward Jurisdiction:</span>
+                      <span className="font-medium text-slate-800">{feature.properties.ward}</span>
+                    </div>
+                    {feature.properties.transitUse && (
+                      <div className="text-[10px] text-slate-500 pt-0.5">
+                        <span className="font-semibold text-slate-700 block">Transit Alignment:</span>
+                        {feature.properties.transitUse}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -117,21 +117,21 @@ export default function RouteOverlay({
         );
       })}
 
-      {/* ONE Restrained Blue Diversion Route - Shown when incident is selected or diversion active */}
+      {/* ONE Restrained Blue Diversion Route - Displayed only when diversion active or incident selected */}
       {(isDiversionActive || isIncidentSelected) && (
         <Polyline
           positions={diversionCoords}
           pathOptions={{
             color: '#2563eb',
-            weight: 4,
+            weight: 3.5,
             opacity: 0.9,
-            dashArray: '6, 8',
+            dashArray: '5, 7',
             lineCap: 'round',
             lineJoin: 'round'
           }}
         >
           <Tooltip sticky direction="top" className="text-xs font-sans">
-            <span className="font-bold text-blue-700">ACTIVE DIVERSION CORRIDOR</span>
+            <span className="font-bold text-blue-700">DIVERSION CORRIDOR ACTIVE</span>
             <span className="text-[10px] text-slate-600 block">JM Road → Shivaji Road Bypass</span>
           </Tooltip>
         </Polyline>

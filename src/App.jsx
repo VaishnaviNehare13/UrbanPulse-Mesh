@@ -12,9 +12,19 @@ import ServiceDetailView from './components/services/ServiceDetailView';
 import AuditLog from './components/operations/AuditLog';
 import LoginView from './components/auth/LoginView';
 
-// Data Sources
-import { PUNE_CENTER, PUNE_ROADS, PUNE_SECTORS } from './data/puneMapData';
-import { INFRASTRUCTURE_FACILITIES } from './data/infrastructure';
+// Real Pune GIS Datasets
+import { 
+  PUNE_WARDS_GEOJSON,
+  PUNE_WATER_BODIES_GEOJSON,
+  PUNE_ROAD_CORRIDORS_GEOJSON,
+  PUNE_HOSPITALS_GEOJSON,
+  PUNE_FIRE_STATIONS_GEOJSON,
+  PUNE_TRANSIT_GEOJSON,
+  PUNE_PARKS_GEOJSON,
+  PUNE_WATER_INFRA_GEOJSON,
+  PUNE_WASTE_FACILITIES_GEOJSON
+} from './data/geo';
+
 import { MUNICIPAL_SERVICES } from './data/municipalServices';
 import { INCIDENTS_DATA } from './data/incidents';
 import { INITIAL_AUDIT_LOG } from './data/simulatedTelemetry';
@@ -39,59 +49,151 @@ export default function App() {
   const [selectedObject, setSelectedObject] = useState(null);
   const [isResolved, setIsResolved] = useState(false);
 
-  // Layer Visibility State (Base, Assets, Operations)
+  // Functional Layer Visibility State
   const [layers, setLayers] = useState({
+    // BASE
     roads: true,
-    sectors: true,
+    wards: true,
     waterBodies: true,
+    // MUNICIPAL ASSETS
     hospitals: true,
     fireStations: true,
     transit: true,
-    utilities: true,
+    parks: false,
+    waterInfra: false,
+    wasteFacilities: false,
+    // OPERATIONS
     incidents: true,
-    traffic: true,
-    operationalZones: true
+    operationalZones: true,
+    diversionRoutes: false,
+    traffic: true
   });
 
   // Search Query & Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Build Comprehensive GIS Search Index
+  // Comprehensive Real Pune GIS Search Index
   const searchResults = useMemo(() => {
     if (!searchQuery || searchQuery.trim().length < 2) return [];
     const q = searchQuery.toLowerCase().trim();
     const results = [];
 
-    // Search Roads
-    PUNE_ROADS.forEach((rd) => {
-      if (rd.name.toLowerCase().includes(q) || rd.corridor.toLowerCase().includes(q)) {
+    // Search Real Roads
+    PUNE_ROAD_CORRIDORS_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      if (p.name.toLowerCase().includes(q) || p.corridor.toLowerCase().includes(q)) {
         results.push({
-          id: rd.id,
-          name: rd.name,
-          subtext: `${rd.class} • ${rd.corridor}`,
+          id: p.id,
+          name: p.name,
+          subtext: `${p.class} • ${p.ward}`,
           category: 'Road',
-          item: rd,
-          coordinates: rd.coordinates
+          item: { ...p, coordinates: f.geometry.coordinates.map(c => [c[1], c[0]]) },
+          coordinates: f.geometry.coordinates.map(c => [c[1], c[0]])
         });
       }
     });
 
-    // Search Facilities
-    INFRASTRUCTURE_FACILITIES.forEach((fac) => {
-      if (fac.name.toLowerCase().includes(q) || fac.ward.toLowerCase().includes(q) || fac.type.toLowerCase().includes(q)) {
+    // Search Real Hospitals
+    PUNE_HOSPITALS_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)) {
         results.push({
-          id: fac.id,
-          name: fac.name,
-          subtext: `${fac.subtype} • ${fac.ward}`,
+          id: p.id,
+          name: p.name,
+          subtext: `${p.type} • ${p.ward}`,
           category: 'Facility',
-          item: fac,
-          lat: fac.lat,
-          lng: fac.lng
+          item: { ...p, lat, lng, type: 'hospital' },
+          lat,
+          lng
         });
       }
     });
 
-    // Search Incidents
+    // Search Real Fire Stations
+    PUNE_FIRE_STATIONS_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `Fire Brigade • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'fire_station' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // Search Real Transit Hubs & Stations
+    PUNE_TRANSIT_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.subtype.toLowerCase().includes(q)) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `${p.subtype} • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'transit' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // Search Real Parks
+    PUNE_PARKS_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q)) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `Public Park • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'park' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // Search Real Water / Waste Utilities
+    PUNE_WATER_INFRA_GEOJSON.features.concat(PUNE_WASTE_FACILITIES_GEOJSON.features).forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q)) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `${p.subtype} • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'water_infra' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // Search Real Wards
+    PUNE_WARDS_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      if (p.name.toLowerCase().includes(q) || `ward ${p.wardNo}`.includes(q)) {
+        results.push({
+          id: p.id,
+          name: `Ward ${p.wardNo}: ${p.name}`,
+          subtext: `Area: ${p.areaKm2} km² • Pop: ${p.population.toLocaleString('en-IN')}`,
+          category: 'Sector',
+          item: { ...p, coordinates: f.geometry.coordinates[0].map(c => [c[1], c[0]]) },
+          coordinates: f.geometry.coordinates[0].map(c => [c[1], c[0]])
+        });
+      }
+    });
+
+    // Search Active Incidents
     incidents.forEach((inc) => {
       if (inc.id.toLowerCase().includes(q) || inc.title.toLowerCase().includes(q) || inc.locationName.toLowerCase().includes(q)) {
         results.push({
@@ -102,20 +204,6 @@ export default function App() {
           item: inc,
           lat: inc.lat,
           lng: inc.lng
-        });
-      }
-    });
-
-    // Search Sectors / Wards
-    PUNE_SECTORS.forEach((sec) => {
-      if (sec.name.toLowerCase().includes(q) || sec.code.toLowerCase().includes(q)) {
-        results.push({
-          id: sec.id,
-          name: `${sec.name} (${sec.code})`,
-          subtext: `${sec.zoneType} • Pop: ${sec.population}`,
-          category: 'Sector',
-          item: sec,
-          coordinates: sec.coordinates
         });
       }
     });
@@ -231,7 +319,6 @@ export default function App() {
                 layers={layers}
                 setLayers={setLayers}
                 incidents={incidents}
-                facilities={INFRASTRUCTURE_FACILITIES}
                 selectedObject={selectedObject}
                 onSelectObject={(obj) => setSelectedObject(obj)}
                 onOpenActionPanel={(inc) => {

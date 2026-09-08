@@ -50,6 +50,7 @@ export const createFacilityMarker = (type, isSelected = false) => {
       svgIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="m6 19-2 2"/><path d="m18 21-2-2"/></svg>`;
       break;
     case 'water':
+    case 'water_infra':
       color = '#0284c7';
       borderColor = '#7dd3fc';
       // Water droplet SVG
@@ -62,10 +63,17 @@ export const createFacilityMarker = (type, isSelected = false) => {
       svgIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="${color}" stroke="${color}" stroke-width="1"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
       break;
     case 'waste':
+    case 'waste_facility':
       color = '#16a34a';
       borderColor = '#86efac';
       // Waste / recycling SVG
       svgIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.2a1.8 1.8 0 0 0 1.58-1"/><path d="m17 7-5 9"/><path d="m20 10-2.5-4.5a1.8 1.8 0 0 0-1.5-1H10"/><path d="m3 14 2 3.5"/><path d="m14 4-3-2-3 2"/></svg>`;
+      break;
+    case 'park':
+      color = '#15803d';
+      borderColor = '#86efac';
+      // Leaf / Tree / Park SVG
+      svgIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15c-3.3 0-6-2.7-6-6 0-4 6-7 6-7s6 3 6 7c0 3.3-2.7 6-6 6z"/></svg>`;
       break;
     case 'municipal':
       color = '#475569';

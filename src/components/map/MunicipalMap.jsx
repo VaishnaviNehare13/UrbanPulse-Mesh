@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { PUNE_CENTER, DEFAULT_ZOOM } from '../../data/puneMapData';
 import IncidentMarker from './IncidentMarker';
-import InfrastructureMarker from './InfrastructureMarker';
 import ZoneOverlay from './ZoneOverlay';
 import RouteOverlay from './RouteOverlay';
+import FacilityOverlay from './FacilityOverlay';
 import MapControls from './MapControls';
 import MapLegend from './MapLegend';
 import MapLayers from './MapLayers';
@@ -22,7 +22,9 @@ function MapViewController({ selectedObject }) {
       const coords = Array.isArray(selectedObject.coordinates[0])
         ? selectedObject.coordinates[0]
         : selectedObject.coordinates;
-      map.setView(coords, 14, { animate: true });
+      if (typeof coords[0] === 'number') {
+        map.setView(coords, 14, { animate: true });
+      }
     }
   }, [selectedObject, map]);
 
@@ -43,21 +45,12 @@ export default function MunicipalMap({
   layers,
   setLayers,
   incidents,
-  facilities,
   selectedObject,
   onSelectObject,
   onOpenActionPanel,
   isResolved
 }) {
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
-
-  // Key facilities visible at city-level zoom
-  const primaryFacilityIds = [
-    'FAC-HOSP-01', // Sassoon General Hospital
-    'FAC-FIRE-01', // Central Fire Station
-    'FAC-TRANS-01', // Pune Junction Rail
-    'FAC-WATER-01'  // Parvati Water Works
-  ];
 
   const isIncidentSelected = selectedObject?.id === 'UP-1024' || selectedObject?.type === 'incident';
 
@@ -67,8 +60,8 @@ export default function MunicipalMap({
       {/* Small White Floating Layer Control */}
       <MapLayers layers={layers} setLayers={setLayers} />
 
-      {/* Compact GIS Legend at Bottom-Left */}
-      <MapLegend />
+      {/* Dynamic GIS Legend at Bottom-Left */}
+      <MapLegend layers={layers} />
 
       {/* Leaflet Map Container */}
       <MapContainer
@@ -84,58 +77,41 @@ export default function MunicipalMap({
         {/* Minimal Controls (+ / - / Reset) at Top-Right */}
         <MapControls onResetView={() => onSelectObject(null)} />
 
-        {/* Clean, Public Basemap with No API Key Watermarks */}
+        {/* Clean, Public OpenStreetMap Basemap without API Key Watermarks */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
 
-        {/* GIS Sector Boundaries & Water Bodies */}
+        {/* Real GIS Sector Boundaries (Wards) & Water Bodies (Rivers/Lakes) */}
         <ZoneOverlay
-          showSectors={layers.sectors}
+          showWards={layers.wards}
           showWaterBodies={layers.waterBodies}
-          selectedSector={selectedObject?.type === 'sector' ? selectedObject : null}
-          onSelectSector={(sec) => onSelectObject({ ...sec, type: 'sector' })}
+          selectedWard={selectedObject?.type === 'ward' || selectedObject?.wardNo ? selectedObject : null}
+          onSelectWard={(ward) => onSelectObject({ ...ward, type: 'ward' })}
+          zoomLevel={zoomLevel}
         />
 
-        {/* Road Network & Traffic Flow Overlay */}
+        {/* Real Road Network & Traffic Flow Overlay */}
         <RouteOverlay
           showRoads={layers.roads}
           showTraffic={layers.traffic}
           selectedRoad={selectedObject?.class ? selectedObject : null}
           onSelectRoad={(rd) => onSelectObject(rd)}
-          isDiversionActive={isResolved}
+          isDiversionActive={isResolved || layers.diversionRoutes}
           isIncidentSelected={isIncidentSelected}
         />
 
-        {/* Municipal Assets with Zoom-Dependent Cartographic Level of Detail */}
-        {facilities.map((fac) => {
-          let visible = true;
-          if (fac.type === 'hospital' && !layers.hospitals) visible = false;
-          if (fac.type === 'fire_station' && !layers.fireStations) visible = false;
-          if (fac.type === 'transit' && !layers.transit) visible = false;
-          if ((fac.type === 'water' || fac.type === 'power' || fac.type === 'waste') && !layers.utilities) visible = false;
+        {/* Real Pune Municipal Infrastructure Assets (Hospitals, Fire Stations, Transit, Parks, Utilities) */}
+        <FacilityOverlay
+          layers={layers}
+          selectedObject={selectedObject}
+          onSelectObject={(obj) => onSelectObject(obj)}
+          zoomLevel={zoomLevel}
+        />
 
-          // At city zoom (<= 13), only show key landmark facilities unless selected
-          if (zoomLevel <= 13 && !primaryFacilityIds.includes(fac.id) && selectedObject?.id !== fac.id) {
-            visible = false;
-          }
-
-          if (!visible) return null;
-
-          return (
-            <InfrastructureMarker
-              key={fac.id}
-              facility={fac}
-              isSelected={selectedObject?.id === fac.id}
-              onSelect={(item) => onSelectObject(item)}
-              zoomLevel={zoomLevel}
-            />
-          );
-        })}
-
-        {/* Active Incidents - One Visually Dominant Active Incident (UP-1024) */}
+        {/* Active Incident (UP-1024) with Subtle Halo Pulse */}
         {layers.incidents && incidents.map((inc, index) => (
           <IncidentMarker
             key={inc.id}
@@ -143,7 +119,7 @@ export default function MunicipalMap({
             isSelected={selectedObject?.id === inc.id}
             onSelect={(item) => onSelectObject(item)}
             onOpenActionPanel={onOpenActionPanel}
-            isDominant={index === 0} // Only halo pulse on the primary active incident
+            isDominant={index === 0}
           />
         ))}
 

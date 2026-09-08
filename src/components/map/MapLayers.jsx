@@ -16,7 +16,7 @@ export default function MapLayers({ layers, setLayers }) {
       group: 'BASE',
       items: [
         { key: 'roads', label: 'Roads' },
-        { key: 'sectors', label: 'Ward Boundaries' },
+        { key: 'wards', label: 'Ward Boundaries' },
         { key: 'waterBodies', label: 'Water Bodies' }
       ]
     },
@@ -26,15 +26,17 @@ export default function MapLayers({ layers, setLayers }) {
         { key: 'hospitals', label: 'Hospitals' },
         { key: 'fireStations', label: 'Fire Stations' },
         { key: 'transit', label: 'Transit' },
-        { key: 'utilities', label: 'Utilities' }
+        { key: 'parks', label: 'Parks & Gardens' },
+        { key: 'waterInfra', label: 'Water Infrastructure' },
+        { key: 'wasteFacilities', label: 'Waste Facilities' }
       ]
     },
     {
       group: 'OPERATIONS',
       items: [
         { key: 'incidents', label: 'Incidents' },
-        { key: 'traffic', label: 'Diversion Routes / Traffic' },
-        { key: 'operationalZones', label: 'Operational Zones' }
+        { key: 'operationalZones', label: 'Operational Zones' },
+        { key: 'diversionRoutes', label: 'Diversion Routes' }
       ]
     }
   ];
@@ -44,7 +46,7 @@ export default function MapLayers({ layers, setLayers }) {
       {/* Small White Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-white border border-slate-300 shadow-sm rounded px-2.5 py-1.5 flex items-center space-x-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+        className="bg-white border border-slate-300 shadow-sm rounded px-2.5 py-1.5 flex items-center space-x-2 text-slate-700 hover:bg-slate-50 font-medium transition-colors cursor-pointer"
       >
         <Layers className="w-3.5 h-3.5 text-slate-600" />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-800">LAYERS</span>
@@ -57,7 +59,7 @@ export default function MapLayers({ layers, setLayers }) {
 
       {/* Layer Control Panel */}
       {isOpen && (
-        <div className="mt-1 bg-white border border-slate-300 rounded shadow-md p-3 w-56 space-y-3">
+        <div className="mt-1 bg-white border border-slate-300 rounded shadow-md p-3 w-60 space-y-3 max-h-[460px] overflow-y-auto">
           {layerGroups.map((grp) => (
             <div key={grp.group} className="space-y-1">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-0.5 border-b border-slate-100">
@@ -65,7 +67,7 @@ export default function MapLayers({ layers, setLayers }) {
               </div>
               <div className="space-y-1 pt-0.5">
                 {grp.items.map((item) => {
-                  const active = layers[item.key] !== undefined ? layers[item.key] : true;
+                  const active = layers[item.key] !== undefined ? layers[item.key] : false;
                   return (
                     <label
                       key={item.key}
