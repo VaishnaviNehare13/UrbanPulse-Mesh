@@ -48,7 +48,8 @@ export default function MunicipalMap({
   selectedObject,
   onSelectObject,
   onOpenActionPanel,
-  isResolved
+  isResolved,
+  onLayerToggle
 }) {
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
 
@@ -58,7 +59,7 @@ export default function MunicipalMap({
     <div className="w-full h-full relative bg-slate-100 overflow-hidden select-none">
       
       {/* Small White Floating Layer Control */}
-      <MapLayers layers={layers} setLayers={setLayers} />
+      <MapLayers layers={layers} setLayers={setLayers} onLayerToggle={onLayerToggle} />
 
       {/* Dynamic GIS Legend at Bottom-Left */}
       <MapLegend layers={layers} />

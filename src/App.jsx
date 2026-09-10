@@ -72,6 +72,20 @@ export default function App() {
   // Search Query & Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
 
+  // HCI Toast Notification Feedback System (Norman Action Cycle / Shneiderman Feedback)
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage((current) => (current === message ? null : current));
+    }, 3200);
+  };
+
+  const handleLayerToggle = (label, enabled) => {
+    showToast(`${label} ${enabled ? 'enabled' : 'hidden'}`);
+  };
+
   // Comprehensive Real Pune GIS Search Index
   const searchResults = useMemo(() => {
     if (!searchQuery || searchQuery.trim().length < 2) return [];
@@ -216,12 +230,16 @@ export default function App() {
     setActiveView('map');
     setSelectedObject(result.item);
     setSearchQuery('');
+    showToast(`Map centered on: ${result.name}`);
   };
 
   // Handle Apply Diversion Decision (Norman's Action Cycle)
   const handleApplyDiversion = (incident) => {
     setIsResolved(true);
     
+    // Enable diversion routes layer on map
+    setLayers(prev => ({ ...prev, diversionRoutes: true }));
+
     // Update incidents state
     setIncidents(prev => prev.map(inc => {
       if (inc.id === incident.id) {
@@ -251,11 +269,13 @@ export default function App() {
       id: `LOG-${Date.now().toString().slice(-4)}`,
       time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       service: "Traffic",
+      operator: "City Administrator",
       severity: "normal",
       event: "DIVERSION RULE APPLIED",
       description: `Rule DIV-R-8842 executed on FC Road. Traffic signal offsets synchronized with JM Road.`
     };
     setAuditLogs(prev => [newLog, ...prev]);
+    showToast("Diversion DIV-R-8842 applied • FC Road corridor stabilizing");
   };
 
   // Handle Override Decision
@@ -266,11 +286,13 @@ export default function App() {
       id: `LOG-${Date.now().toString().slice(-4)}`,
       time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       service: "Emergency",
+      operator: "City Administrator",
       severity: "warning",
       event: "MANUAL OVERRIDE LOGGED",
       description: `Operator overrode automated diversion for incident ${incident.id}. Manual dispatch protocol active.`
     };
     setAuditLogs(prev => [newLog, ...prev]);
+    showToast("Manual override logged • Manual dispatch protocol active");
   };
 
   // If not logged in, render simulated Login Screen
@@ -325,7 +347,18 @@ export default function App() {
                   setSelectedObject({ ...inc, type: 'incident' });
                 }}
                 isResolved={isResolved}
+                onLayerToggle={handleLayerToggle}
               />
+
+              {/* Calm Institutional Toast Notification Feedback */}
+              {toastMessage && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1100] pointer-events-none transition-all animate-fadeIn">
+                  <div className="bg-slate-900/90 backdrop-blur-xs text-white text-xs px-3.5 py-1.5 rounded-xs shadow-md border border-slate-700/80 font-medium flex items-center space-x-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    <span>{toastMessage}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 20–25% RIGHT OPERATIONS CONSOLE */}
@@ -371,7 +404,7 @@ export default function App() {
         {/* INCIDENTS / AUDIT LOG SCREEN */}
         {(activeView === 'alerts' || activeView === 'audit') && (
           <div className="flex-1 bg-slate-50 p-6 overflow-y-auto">
-            <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded p-5 space-y-4">
+            <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-xs p-5 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
                   Pune Municipal Event Bus & Audit Log
@@ -402,3 +435,4 @@ export default function App() {
     </div>
   );
 }
+

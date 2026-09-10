@@ -51,17 +51,17 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="w-56 bg-white text-slate-700 flex flex-col h-full shrink-0 border-r border-slate-200 select-none z-30">
+    <aside className="w-56 bg-white text-slate-700 flex flex-col h-full shrink-0 border-r border-slate-200 select-none z-30 font-sans">
       
       {/* Navigation Groups (Scrollable) */}
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         
         {/* PRIMARY GROUP */}
         <div>
-          <div className="px-2 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
             PRIMARY
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" role="navigation" aria-label="Primary Navigation">
             {primaryItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -72,18 +72,19 @@ export default function Sidebar({
                     setActiveView(item.id);
                     setSelectedService(null);
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center justify-between transition-colors ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-50/80 text-blue-900 font-semibold border-l-2 border-blue-600' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-2 border-transparent'
+                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex items-center space-x-2.5">
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                    <span className="truncate">{item.label}</span>
                   </div>
                   {item.count && (
-                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.2 rounded">
+                    <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200/60 px-1.5 py-0.2 rounded-xs">
                       {item.count}
                     </span>
                   )}
@@ -95,15 +96,15 @@ export default function Sidebar({
 
         {/* SERVICES GROUP */}
         <div>
-          <div className="px-2 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
             SERVICES
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" role="navigation" aria-label="Services Navigation">
             {serviceItems.map((item) => {
               const Icon = item.icon;
               const isSelected = selectedService === item.id && activeView === 'service_detail';
               const status = getServiceStatus(item.id);
-              const isAttention = status === 'attention' || status === 'moderate' || status === 'high-load';
+              const isAttention = status === 'attention' || status === 'moderate' || status === 'high-load' || status === 'minor-delay';
               const isCritical = status === 'critical' || status === 'active';
 
               return (
@@ -113,19 +114,23 @@ export default function Sidebar({
                     setSelectedService(item.id);
                     setActiveView('service_detail');
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center justify-between transition-colors ${
+                  aria-current={isSelected ? 'page' : undefined}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
                     isSelected 
-                      ? 'bg-blue-50/80 text-blue-900 font-semibold border-l-2 border-blue-600' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-2 border-transparent'
+                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
-                  <div className="flex items-center space-x-2 truncate">
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`} />
+                  <div className="flex items-center space-x-2.5 truncate">
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    isCritical ? 'bg-red-600' : isAttention ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}></span>
+                  <span 
+                    title={isCritical ? 'Critical/Active' : isAttention ? 'Attention/High Load' : 'Operational'}
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      isCritical ? 'bg-red-600' : isAttention ? 'bg-amber-500' : 'bg-emerald-600'
+                    }`}
+                  ></span>
                 </button>
               );
             })}
@@ -134,10 +139,10 @@ export default function Sidebar({
 
         {/* SYSTEM GROUP */}
         <div>
-          <div className="px-2 mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
             SYSTEM
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" role="navigation" aria-label="System Navigation">
             {systemItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -148,14 +153,15 @@ export default function Sidebar({
                     setActiveView(item.id);
                     setSelectedService(null);
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-sm text-xs font-medium flex items-center space-x-2 transition-colors ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center space-x-2.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-50/80 text-blue-900 font-semibold border-l-2 border-blue-600' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-2 border-transparent'
+                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                  <span className="truncate">{item.label}</span>
                 </button>
               );
             })}
@@ -166,10 +172,11 @@ export default function Sidebar({
 
       {/* Bottom Minimal Operational Tag */}
       <div className="p-2.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-500 flex items-center justify-between">
-        <span>Pune Node 01</span>
-        <span className="font-mono text-slate-400">SYNCED</span>
+        <span className="font-medium text-slate-600">Pune Node 01</span>
+        <span className="font-mono text-slate-400 text-[9px]">SYNCED</span>
       </div>
 
     </aside>
   );
 }
+
