@@ -11,6 +11,7 @@ import ServiceHealthView from './components/system/ServiceHealthView';
 import ServiceDetailView from './components/services/ServiceDetailView';
 import AuditLog from './components/operations/AuditLog';
 import LoginView from './components/auth/LoginView';
+import HomeView from './components/pages/HomeView';
 
 // Real Pune GIS Datasets
 import { 
@@ -30,8 +31,9 @@ import { INCIDENTS_DATA } from './data/incidents';
 import { INITIAL_AUDIT_LOG } from './data/simulatedTelemetry';
 
 export default function App() {
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  // Public vs Authenticated Flow
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [publicPage, setPublicPage] = useState('home'); // 'home' | 'login'
   const [currentUser, setCurrentUser] = useState({
     id: "PUNE-ADMIN-01",
     name: "Dr. S. Kulkarni",
@@ -48,6 +50,7 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState(INITIAL_AUDIT_LOG);
   const [selectedObject, setSelectedObject] = useState(null);
   const [isResolved, setIsResolved] = useState(false);
+
 
   // Functional Layer Visibility State
   const [layers, setLayers] = useState({
@@ -295,20 +298,29 @@ export default function App() {
     showToast("Manual override logged • Manual dispatch protocol active");
   };
 
-  // If not logged in, render simulated Login Screen
+  // If not logged in, render Home or Login Screen
   if (!isAuthenticated) {
+    if (publicPage === 'home') {
+      return (
+        <HomeView
+          onEnterOperations={() => setPublicPage('login')}
+          onLoginClick={() => setPublicPage('login')}
+        />
+      );
+    }
     return (
       <LoginView
         onLogin={(user) => {
           setCurrentUser(user);
           setIsAuthenticated(true);
         }}
+        onBackToHome={() => setPublicPage('home')}
       />
     );
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-100 text-slate-900 font-sans overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-[#F7F8FA] text-[#172033] font-sans overflow-hidden">
       
       {/* 1. TOP MUNICIPAL HEADER */}
       <Header
@@ -317,8 +329,12 @@ export default function App() {
         searchResults={searchResults}
         onSelectSearchResult={handleSelectSearchResult}
         user={currentUser}
-        onLogout={() => setIsAuthenticated(false)}
+        onLogout={() => {
+          setIsAuthenticated(false);
+          setPublicPage('home');
+        }}
       />
+
 
       {/* 2. MAIN APPLICATION WORKSPACE */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -330,6 +346,10 @@ export default function App() {
           selectedService={selectedServiceId}
           setSelectedService={setSelectedServiceId}
           servicesData={servicesData}
+          onNavigateToHome={() => {
+            setIsAuthenticated(false);
+            setPublicPage('home');
+          }}
         />
 
         {/* CENTER & RIGHT OPERATIONAL VIEW */}

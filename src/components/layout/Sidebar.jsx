@@ -20,7 +20,8 @@ export default function Sidebar({
   setActiveView, 
   selectedService, 
   setSelectedService,
-  servicesData
+  servicesData,
+  onNavigateToHome
 }) {
 
   const getServiceStatus = (serviceId) => {
@@ -51,7 +52,7 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="w-56 bg-white text-slate-700 flex flex-col h-full shrink-0 border-r border-slate-200 select-none z-30 font-sans">
+    <aside className="w-56 bg-white text-slate-700 flex flex-col h-full shrink-0 border-r border-[#D9E0E8] select-none z-30 font-sans">
       
       {/* Navigation Groups (Scrollable) */}
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
@@ -73,14 +74,14 @@ export default function Sidebar({
                     setSelectedService(null);
                   }}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2563A6] cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
+                      ? 'bg-[#EAF2FA] text-[#0F1B2D] font-semibold border-l-[3px] border-[#2563A6] pl-[7px]' 
+                      : 'text-slate-600 hover:bg-[#F7F8FA] hover:text-[#0F1B2D] border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
-                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#2563A6]' : 'text-slate-400'}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
                   {item.count && (
@@ -115,14 +116,14 @@ export default function Sidebar({
                     setActiveView('service_detail');
                   }}
                   aria-current={isSelected ? 'page' : undefined}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2563A6] cursor-pointer ${
                     isSelected 
-                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
+                      ? 'bg-[#EAF2FA] text-[#0F1B2D] font-semibold border-l-[3px] border-[#2563A6] pl-[7px]' 
+                      : 'text-slate-600 hover:bg-[#F7F8FA] hover:text-[#0F1B2D] border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5 truncate">
-                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-blue-700' : 'text-slate-400'}`} />
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#2563A6]' : 'text-slate-400'}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
                   <span 
@@ -154,13 +155,13 @@ export default function Sidebar({
                     setSelectedService(null);
                   }}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center space-x-2.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600 cursor-pointer ${
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xs text-xs font-medium flex items-center space-x-2.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2563A6] cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-50/70 text-slate-900 font-semibold border-l-[3px] border-blue-600 pl-[7px]' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent pl-[7px]'
+                      ? 'bg-[#EAF2FA] text-[#0F1B2D] font-semibold border-l-[3px] border-[#2563A6] pl-[7px]' 
+                      : 'text-slate-600 hover:bg-[#F7F8FA] hover:text-[#0F1B2D] border-l-[3px] border-transparent pl-[7px]'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#2563A6]' : 'text-slate-400'}`} />
                   <span className="truncate">{item.label}</span>
                 </button>
               );
@@ -170,13 +171,23 @@ export default function Sidebar({
 
       </div>
 
-      {/* Bottom Minimal Operational Tag */}
-      <div className="p-2.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-500 flex items-center justify-between">
-        <span className="font-medium text-slate-600">Pune Node 01</span>
+      {/* Bottom Minimal Operational Tag & Home Shortcut */}
+      <div className="p-2.5 bg-[#F7F8FA] border-t border-[#D9E0E8] text-[10px] text-slate-500 flex items-center justify-between">
+        {onNavigateToHome ? (
+          <button
+            onClick={onNavigateToHome}
+            className="font-medium text-[#2563A6] hover:underline cursor-pointer"
+          >
+            ← Public Home
+          </button>
+        ) : (
+          <span className="font-medium text-slate-600">Pune Node 01</span>
+        )}
         <span className="font-mono text-slate-400 text-[9px]">SYNCED</span>
       </div>
 
     </aside>
   );
 }
+
 
