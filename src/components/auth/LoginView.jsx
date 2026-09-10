@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronRight, ArrowLeft, ShieldCheck, Eye, EyeOff, Lock, UserCheck } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 export default function LoginView({ onLogin, onBackToHome }) {
+  const { language, setLanguage, t } = useTranslation();
   const [officerId, setOfficerId] = useState('PUNE-ADMIN-01');
   const [password, setPassword] = useState('pune-mesh-2026');
   const [role, setRole] = useState('City Administrator');
@@ -14,11 +16,11 @@ export default function LoginView({ onLogin, onBackToHome }) {
     setError('');
 
     if (!officerId.trim()) {
-      setError('Please enter your Officer ID.');
+      setError(t('auth.errorId'));
       return;
     }
     if (!password.trim()) {
-      setError('Please enter your access password.');
+      setError(t('auth.errorPassword'));
       return;
     }
 
@@ -51,6 +53,38 @@ export default function LoginView({ onLogin, onBackToHome }) {
   return (
     <div className="min-h-screen w-screen bg-[#F7F8FA] text-[#172033] font-sans flex flex-col justify-center items-center p-4 sm:p-6 select-none">
       
+      {/* Top Language Toggle on Login Screen */}
+      <div className="w-full max-w-4xl flex justify-end mb-2">
+        <div className="flex items-center bg-white border border-[#D9E0E8] rounded p-0.5 text-[11px] font-medium text-slate-600 shadow-2xs">
+          <button
+            onClick={() => setLanguage('en')}
+            className={`px-2 py-0.5 rounded-xs transition-colors cursor-pointer ${
+              language === 'en' ? 'bg-[#0F1B2D] font-bold text-white shadow-2xs' : 'hover:text-slate-900'
+            }`}
+          >
+            EN
+          </button>
+          <span className="text-slate-300 px-0.5">|</span>
+          <button
+            onClick={() => setLanguage('hi')}
+            className={`px-2 py-0.5 rounded-xs transition-colors cursor-pointer ${
+              language === 'hi' ? 'bg-[#0F1B2D] font-bold text-white shadow-2xs' : 'hover:text-slate-900'
+            }`}
+          >
+            हिं
+          </button>
+          <span className="text-slate-300 px-0.5">|</span>
+          <button
+            onClick={() => setLanguage('mr')}
+            className={`px-2 py-0.5 rounded-xs transition-colors cursor-pointer ${
+              language === 'mr' ? 'bg-[#0F1B2D] font-bold text-white shadow-2xs' : 'hover:text-slate-900'
+            }`}
+          >
+            मर
+          </button>
+        </div>
+      </div>
+
       {/* Split Institutional Card Container */}
       <div className="w-full max-w-4xl bg-white rounded border border-[#D9E0E8] shadow-md overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[480px]">
         
@@ -76,7 +110,7 @@ export default function LoginView({ onLogin, onBackToHome }) {
                 className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-medium transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Return to Home</span>
+                <span>{t('app.backToHome')}</span>
               </button>
             )}
 
@@ -86,33 +120,33 @@ export default function LoginView({ onLogin, onBackToHome }) {
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-white leading-none">
-                  URBANPULSE MESH
+                  {t('app.title')}
                 </h1>
                 <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                  MUNICIPAL COORDINATION & DECISION SUPPORT
+                  {t('app.subtitle')}
                 </span>
               </div>
             </div>
 
             <div className="pt-4 space-y-2 text-xs text-slate-300 leading-relaxed font-normal">
               <p>
-                Authoritative multi-domain operational workspace for Pune municipal coordination.
+                {t('auth.leftDesc')}
               </p>
               <div className="p-2.5 rounded bg-slate-800/80 border border-slate-700/80 text-[11px] space-y-1">
                 <div className="font-semibold text-white flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Secured Node 01 • Pune</span>
+                  <span>{t('auth.securedNode')}</span>
                 </div>
                 <div className="text-slate-400 text-[10px]">
-                  Simulated Access Mode • Role-Based Authentication
+                  {t('auth.simulatedModeNotice')}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="relative z-10 pt-6 text-[10px] text-slate-400 font-mono flex items-center justify-between border-t border-slate-800">
-            <span>PUNE, MAHARASHTRA</span>
-            <span>ACADEMIC PROTOTYPE</span>
+            <span>{t('app.puneMaharashtra')}</span>
+            <span>{t('app.academicPrototype')}</span>
           </div>
 
         </div>
@@ -123,13 +157,13 @@ export default function LoginView({ onLogin, onBackToHome }) {
           <div className="space-y-4">
             <div>
               <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
-                AUTHENTICATION
+                {t('auth.authBadge')}
               </span>
               <h2 className="text-base font-bold text-[#0F1B2D] tracking-tight mt-0.5">
-                SECURE ACCESS
+                {t('auth.title')}
               </h2>
               <p className="text-xs text-[#64748B] mt-0.5">
-                Municipal Operations Workspace
+                {t('auth.subtitle')}
               </p>
             </div>
 
@@ -143,13 +177,13 @@ export default function LoginView({ onLogin, onBackToHome }) {
               
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-[#172033] block">
-                  Officer ID
+                  {t('auth.officerIdLabel')}
                 </label>
                 <input
                   type="text"
                   value={officerId}
                   onChange={(e) => setOfficerId(e.target.value)}
-                  placeholder="e.g. PUNE-ADMIN-01"
+                  placeholder={t('auth.officerIdPlaceholder')}
                   required
                   className="w-full px-3 py-1.5 text-xs font-mono bg-[#F7F8FA] border border-[#D9E0E8] rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2563A6] text-[#172033] placeholder:text-slate-400"
                 />
@@ -158,7 +192,7 @@ export default function LoginView({ onLogin, onBackToHome }) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-[#172033]">
-                    Password
+                    {t('auth.passwordLabel')}
                   </label>
                   <button
                     type="button"
@@ -166,14 +200,14 @@ export default function LoginView({ onLogin, onBackToHome }) {
                     className="text-[10px] text-[#64748B] hover:text-[#0F1B2D] flex items-center gap-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    <span>{showPassword ? 'Hide' : 'Show'}</span>
+                    <span>{showPassword ? t('auth.hidePassword') : t('auth.showPassword')}</span>
                   </button>
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   required
                   className="w-full px-3 py-1.5 text-xs font-mono bg-[#F7F8FA] border border-[#D9E0E8] rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2563A6] text-[#172033]"
                 />
@@ -181,16 +215,16 @@ export default function LoginView({ onLogin, onBackToHome }) {
 
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-[#172033] block">
-                  Designated Role
+                  {t('auth.roleLabel')}
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full px-2.5 py-1.5 text-xs bg-[#F7F8FA] border border-[#D9E0E8] rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2563A6] text-[#172033]"
                 >
-                  <option value="City Administrator">Dr. S. Kulkarni (City Administrator)</option>
-                  <option value="Traffic Controller">Traffic Operations Controller</option>
-                  <option value="Emergency Coordinator">Disaster & Emergency Lead</option>
+                  <option value="City Administrator">{t('auth.roles.admin')}</option>
+                  <option value="Traffic Controller">{t('auth.roles.traffic')}</option>
+                  <option value="Emergency Coordinator">{t('auth.roles.emergency')}</option>
                 </select>
               </div>
 
@@ -199,7 +233,7 @@ export default function LoginView({ onLogin, onBackToHome }) {
                 disabled={isLoading}
                 className="w-full bg-[#0F1B2D] hover:bg-[#172033] active:bg-black text-white font-semibold text-xs py-2.5 px-3 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2563A6] mt-2"
               >
-                <span>{isLoading ? 'AUTHENTICATING...' : 'SIGN IN'}</span>
+                <span>{isLoading ? t('auth.authenticatingBtn') : t('auth.signInBtn')}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
 
@@ -208,7 +242,7 @@ export default function LoginView({ onLogin, onBackToHome }) {
             {/* Quick Demo Pre-fill options */}
             <div className="pt-2 border-t border-[#D9E0E8] space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
-                Demo Environment Shortcuts:
+                {t('auth.demoShortcutsLabel')}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 <button
@@ -216,21 +250,21 @@ export default function LoginView({ onLogin, onBackToHome }) {
                   onClick={() => handleQuickDemoFill('admin')}
                   className="text-[10px] bg-[#F1F4F7] hover:bg-[#EAF2FA] text-[#0F1B2D] px-2 py-1 rounded border border-[#D9E0E8] transition-colors cursor-pointer"
                 >
-                  Administrator
+                  {t('auth.shortcuts.admin')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickDemoFill('traffic')}
                   className="text-[10px] bg-[#F1F4F7] hover:bg-[#EAF2FA] text-[#0F1B2D] px-2 py-1 rounded border border-[#D9E0E8] transition-colors cursor-pointer"
                 >
-                  Traffic Lead
+                  {t('auth.shortcuts.traffic')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickDemoFill('emergency')}
                   className="text-[10px] bg-[#F1F4F7] hover:bg-[#EAF2FA] text-[#0F1B2D] px-2 py-1 rounded border border-[#D9E0E8] transition-colors cursor-pointer"
                 >
-                  Emergency Lead
+                  {t('auth.shortcuts.emergency')}
                 </button>
               </div>
             </div>
@@ -238,7 +272,7 @@ export default function LoginView({ onLogin, onBackToHome }) {
           </div>
 
           <div className="pt-4 text-center text-[10px] text-[#64748B] font-mono border-t border-[#D9E0E8]">
-            SIMULATED ACCESS • ACADEMIC PROTOTYPE
+            {t('auth.simulatedAccessFooter')}
           </div>
 
         </div>
@@ -248,4 +282,3 @@ export default function LoginView({ onLogin, onBackToHome }) {
     </div>
   );
 }
-

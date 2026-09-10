@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import BottomStatusBar from './components/layout/BottomStatusBar';
+import IncidentNotificationBanner from './components/layout/IncidentNotificationBanner';
 import MunicipalMap from './components/map/MunicipalMap';
 import OperationsFeed from './components/operations/OperationsFeed';
 import WhatIfPanel from './components/simulation/WhatIfPanel';
@@ -23,14 +24,18 @@ import {
   PUNE_TRANSIT_GEOJSON,
   PUNE_PARKS_GEOJSON,
   PUNE_WATER_INFRA_GEOJSON,
+  PUNE_POWER_INFRA_GEOJSON,
   PUNE_WASTE_FACILITIES_GEOJSON
 } from './data/geo';
 
 import { MUNICIPAL_SERVICES } from './data/municipalServices';
 import { INCIDENTS_DATA } from './data/incidents';
 import { INITIAL_AUDIT_LOG } from './data/simulatedTelemetry';
+import { LanguageProvider, useTranslation } from './i18n';
 
-export default function App() {
+function AppContent() {
+  const { t } = useTranslation();
+
   // Public vs Authenticated Flow
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [publicPage, setPublicPage] = useState('home'); // 'home' | 'login'
@@ -43,6 +48,7 @@ export default function App() {
   // Active View State: 'map' | 'alerts' | 'simulation' | 'analytics' | 'architecture' | 'health' | 'audit' | 'service_detail'
   const [activeView, setActiveView] = useState('map');
   const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [activeServiceFilter, setActiveServiceFilter] = useState('all'); // 'all' | 'traffic' | 'emergency' | 'transit' | 'water' | 'power' | 'waste'
 
   // Synchronized Data State
   const [servicesData, setServicesData] = useState(MUNICIPAL_SERVICES);
@@ -50,7 +56,6 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState(INITIAL_AUDIT_LOG);
   const [selectedObject, setSelectedObject] = useState(null);
   const [isResolved, setIsResolved] = useState(false);
-
 
   // Functional Layer Visibility State
   const [layers, setLayers] = useState({
@@ -63,7 +68,8 @@ export default function App() {
     fireStations: true,
     transit: true,
     parks: false,
-    waterInfra: false,
+    waterInfra: true,
+    powerInfra: true,
     wasteFacilities: false,
     // OPERATIONS
     incidents: true,
@@ -75,7 +81,7 @@ export default function App() {
   // Search Query & Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
 
-  // HCI Toast Notification Feedback System (Norman Action Cycle / Shneiderman Feedback)
+  // HCI Toast Notification Feedback System
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (message) => {
@@ -86,123 +92,201 @@ export default function App() {
   };
 
   const handleLayerToggle = (label, enabled) => {
-    showToast(`${label} ${enabled ? 'enabled' : 'hidden'}`);
+    showToast(`${label} ${enabled ? t('toasts.layerEnabled') : t('toasts.layerHidden')}`);
   };
 
   // Comprehensive Real Pune GIS Search Index
   const searchResults = useMemo(() => {
-    if (!searchQuery || searchQuery.trim().length < 2) return [];
+    if (!searchQuery || searchQuery.trim().length < 1) return [];
     const q = searchQuery.toLowerCase().trim();
     const results = [];
 
-    // Search Real Roads
+    // 1. Search Real Roads & Corridors
     PUNE_ROAD_CORRIDORS_GEOJSON.features.forEach((f) => {
       const p = f.properties;
-      if (p.name.toLowerCase().includes(q) || p.corridor.toLowerCase().includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.corridor.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q) ||
+        p.ward.toLowerCase().includes(q)
+      ) {
         results.push({
           id: p.id,
           name: p.name,
           subtext: `${p.class} • ${p.ward}`,
           category: 'Road',
-          item: { ...p, coordinates: f.geometry.coordinates.map(c => [c[1], c[0]]) },
+          item: { ...p, category: 'traffic', coordinates: f.geometry.coordinates.map(c => [c[1], c[0]]) },
           coordinates: f.geometry.coordinates.map(c => [c[1], c[0]])
         });
       }
     });
 
-    // Search Real Hospitals
+    // 2. Search Real Hospitals (Emergency)
     PUNE_HOSPITALS_GEOJSON.features.forEach((f) => {
       const p = f.properties;
       const [lng, lat] = f.geometry.coordinates;
-      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        p.type.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q)
+      ) {
         results.push({
           id: p.id,
           name: p.name,
           subtext: `${p.type} • ${p.ward}`,
           category: 'Facility',
-          item: { ...p, lat, lng, type: 'hospital' },
+          item: { ...p, lat, lng, type: 'hospital', domain: 'emergency' },
           lat,
           lng
         });
       }
     });
 
-    // Search Real Fire Stations
+    // 3. Search Real Fire Stations (Emergency)
     PUNE_FIRE_STATIONS_GEOJSON.features.forEach((f) => {
       const p = f.properties;
       const [lng, lat] = f.geometry.coordinates;
-      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        p.type.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q)
+      ) {
         results.push({
           id: p.id,
           name: p.name,
           subtext: `Fire Brigade • ${p.ward}`,
           category: 'Facility',
-          item: { ...p, lat, lng, type: 'fire_station' },
+          item: { ...p, lat, lng, type: 'fire_station', domain: 'emergency' },
           lat,
           lng
         });
       }
     });
 
-    // Search Real Transit Hubs & Stations
+    // 4. Search Real Transit Hubs & Stations (Transit)
     PUNE_TRANSIT_GEOJSON.features.forEach((f) => {
       const p = f.properties;
       const [lng, lat] = f.geometry.coordinates;
-      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q) || p.subtype.toLowerCase().includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        (p.subtype && p.subtype.toLowerCase().includes(q)) ||
+        p.id.toLowerCase().includes(q)
+      ) {
         results.push({
           id: p.id,
           name: p.name,
-          subtext: `${p.subtype} • ${p.ward}`,
+          subtext: `${p.subtype || 'Transit Hub'} • ${p.ward}`,
           category: 'Facility',
-          item: { ...p, lat, lng, type: 'transit' },
+          item: { ...p, lat, lng, type: 'transit', domain: 'transit' },
           lat,
           lng
         });
       }
     });
 
-    // Search Real Parks
+    // 5. Search Real Power Substations (Power)
+    PUNE_POWER_INFRA_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        (p.subtype && p.subtype.toLowerCase().includes(q)) ||
+        p.id.toLowerCase().includes(q)
+      ) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `${p.voltageLevel} Substation • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'power_infra', domain: 'power' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // 6. Search Real Water Facilities (Water)
+    PUNE_WATER_INFRA_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        (p.subtype && p.subtype.toLowerCase().includes(q)) ||
+        p.id.toLowerCase().includes(q)
+      ) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `${p.subtype || 'Water Facility'} • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'water_infra', domain: 'water' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // 7. Search Real Solid Waste Facilities (Waste)
+    PUNE_WASTE_FACILITIES_GEOJSON.features.forEach((f) => {
+      const p = f.properties;
+      const [lng, lat] = f.geometry.coordinates;
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) || 
+        (p.subtype && p.subtype.toLowerCase().includes(q)) ||
+        p.id.toLowerCase().includes(q)
+      ) {
+        results.push({
+          id: p.id,
+          name: p.name,
+          subtext: `${p.subtype || 'Waste Facility'} • ${p.ward}`,
+          category: 'Facility',
+          item: { ...p, lat, lng, type: 'waste_facility', domain: 'waste' },
+          lat,
+          lng
+        });
+      }
+    });
+
+    // 8. Search Real Parks & Gardens
     PUNE_PARKS_GEOJSON.features.forEach((f) => {
       const p = f.properties;
       const [lng, lat] = f.geometry.coordinates;
-      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        p.ward.toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q)
+      ) {
         results.push({
           id: p.id,
           name: p.name,
           subtext: `Public Park • ${p.ward}`,
           category: 'Facility',
-          item: { ...p, lat, lng, type: 'park' },
+          item: { ...p, lat, lng, type: 'park', domain: 'waste' },
           lat,
           lng
         });
       }
     });
 
-    // Search Real Water / Waste Utilities
-    PUNE_WATER_INFRA_GEOJSON.features.concat(PUNE_WASTE_FACILITIES_GEOJSON.features).forEach((f) => {
-      const p = f.properties;
-      const [lng, lat] = f.geometry.coordinates;
-      if (p.name.toLowerCase().includes(q) || p.ward.toLowerCase().includes(q)) {
-        results.push({
-          id: p.id,
-          name: p.name,
-          subtext: `${p.subtype} • ${p.ward}`,
-          category: 'Facility',
-          item: { ...p, lat, lng, type: 'water_infra' },
-          lat,
-          lng
-        });
-      }
-    });
-
-    // Search Real Wards
+    // 9. Search Real PMC Administrative Wards
     PUNE_WARDS_GEOJSON.features.forEach((f) => {
       const p = f.properties;
-      if (p.name.toLowerCase().includes(q) || `ward ${p.wardNo}`.includes(q)) {
+      if (
+        p.name.toLowerCase().includes(q) || 
+        `ward ${p.wardNo}`.includes(q) ||
+        p.id.toLowerCase().includes(q) ||
+        (p.zone && p.zone.toLowerCase().includes(q))
+      ) {
         results.push({
           id: p.id,
           name: `Ward ${p.wardNo}: ${p.name}`,
-          subtext: `Area: ${p.areaKm2} km² • Pop: ${p.population.toLocaleString('en-IN')}`,
+          subtext: `${p.zone} • Pop: ${p.population.toLocaleString('en-IN')}`,
           category: 'Sector',
           item: { ...p, coordinates: f.geometry.coordinates[0].map(c => [c[1], c[0]]) },
           coordinates: f.geometry.coordinates[0].map(c => [c[1], c[0]])
@@ -210,22 +294,26 @@ export default function App() {
       }
     });
 
-    // Search Active Incidents
+    // 10. Search Active Incidents
     incidents.forEach((inc) => {
-      if (inc.id.toLowerCase().includes(q) || inc.title.toLowerCase().includes(q) || inc.locationName.toLowerCase().includes(q)) {
+      if (
+        inc.id.toLowerCase().includes(q) || 
+        inc.title.toLowerCase().includes(q) || 
+        inc.locationName.toLowerCase().includes(q)
+      ) {
         results.push({
           id: inc.id,
           name: `Incident #${inc.id} (${inc.severity})`,
           subtext: inc.locationName,
           category: 'Incident',
-          item: inc,
+          item: { ...inc, type: 'incident' },
           lat: inc.lat,
           lng: inc.lng
         });
       }
     });
 
-    return results.slice(0, 8);
+    return results.slice(0, 10);
   }, [searchQuery, incidents]);
 
   // Handle Search Result Selection
@@ -233,7 +321,21 @@ export default function App() {
     setActiveView('map');
     setSelectedObject(result.item);
     setSearchQuery('');
-    showToast(`Map centered on: ${result.name}`);
+    showToast(`${t('toasts.navigatedTo')} ${result.name}`);
+  };
+
+  // Handle Inspect from Notification Banner or Overview
+  const handleInspectIncident = (incident) => {
+    setActiveView('map');
+    const target = incident || incidents[0];
+    setSelectedObject({ ...target, type: 'incident', lat: target.lat || 18.5204, lng: target.lng || 73.8415 });
+    showToast(t('toasts.openedIncident'));
+  };
+
+  // Handle View Service Navigation from any Map Popup
+  const handleViewService = (serviceId) => {
+    setSelectedServiceId(serviceId);
+    setActiveView('service_detail');
   };
 
   // Handle Apply Diversion Decision (Norman's Action Cycle)
@@ -278,7 +380,7 @@ export default function App() {
       description: `Rule DIV-R-8842 executed on FC Road. Traffic signal offsets synchronized with JM Road.`
     };
     setAuditLogs(prev => [newLog, ...prev]);
-    showToast("Diversion DIV-R-8842 applied • FC Road corridor stabilizing");
+    showToast(t('toasts.diversionApplied'));
   };
 
   // Handle Override Decision
@@ -295,7 +397,7 @@ export default function App() {
       description: `Operator overrode automated diversion for incident ${incident.id}. Manual dispatch protocol active.`
     };
     setAuditLogs(prev => [newLog, ...prev]);
-    showToast("Manual override logged • Manual dispatch protocol active");
+    showToast(t('toasts.manualOverrideLogged'));
   };
 
   // If not logged in, render Home or Login Screen
@@ -335,8 +437,14 @@ export default function App() {
         }}
       />
 
+      {/* 2. RESTRAINED MUNICIPAL INCIDENT NOTIFICATION STRIP */}
+      <IncidentNotificationBanner
+        activeIncident={incidents[0]}
+        isResolved={isResolved}
+        onInspect={() => handleInspectIncident(incidents[0])}
+      />
 
-      {/* 2. MAIN APPLICATION WORKSPACE */}
+      {/* 3. MAIN APPLICATION WORKSPACE */}
       <div className="flex flex-1 overflow-hidden relative">
         
         {/* LEFT RESTRAINED LIGHT SIDEBAR */}
@@ -366,6 +474,9 @@ export default function App() {
                 onOpenActionPanel={(inc) => {
                   setSelectedObject({ ...inc, type: 'incident' });
                 }}
+                onViewService={handleViewService}
+                activeServiceFilter={activeServiceFilter}
+                onSelectServiceFilter={setActiveServiceFilter}
                 isResolved={isResolved}
                 onLayerToggle={handleLayerToggle}
               />
@@ -392,6 +503,10 @@ export default function App() {
               isResolved={isResolved}
               onSelectIncident={(inc) => setSelectedObject({ ...inc, type: 'incident' })}
               onClearSelection={() => setSelectedObject(null)}
+              activeServiceFilter={activeServiceFilter}
+              onSelectService={(svcId) => {
+                setActiveServiceFilter(svcId);
+              }}
             />
           </div>
         )}
@@ -449,10 +564,17 @@ export default function App() {
 
       </div>
 
-      {/* 3. BOTTOM GIS STATUS STRIP */}
+      {/* 4. BOTTOM GIS STATUS STRIP */}
       <BottomStatusBar currentZoom={13} />
 
     </div>
   );
 }
 
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
+  );
+}

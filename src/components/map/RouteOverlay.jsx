@@ -1,15 +1,20 @@
 import React from 'react';
 import { Polyline, Tooltip, Popup } from 'react-leaflet';
 import { PUNE_ROAD_CORRIDORS_GEOJSON } from '../../data/geo/puneRoadCorridors';
+import { useTranslation } from '../../i18n';
+import { ExternalLink } from 'lucide-react';
 
 export default function RouteOverlay({ 
   showRoads, 
   showTraffic, 
   onSelectRoad, 
   selectedRoad,
+  onViewService,
+  activeServiceFilter = 'all',
   isDiversionActive = false,
   isIncidentSelected = false
 }) {
+  const { t } = useTranslation();
   if (!showRoads) return null;
 
   // Single Restrained Diversion Corridor: JM Road bypass via Sancheti & Shivaji Road
@@ -22,6 +27,8 @@ export default function RouteOverlay({
     [18.5220, 73.8555]  // Shaniwar Wada
   ];
 
+  const isTrafficFilter = activeServiceFilter === 'traffic' || activeServiceFilter === 'all';
+
   return (
     <>
       {/* Real Major Road Corridors - Restrained Thin Muted Lines */}
@@ -32,19 +39,19 @@ export default function RouteOverlay({
 
         // Default: thin muted neutral corridor line
         let color = '#64748b';
-        let weight = 2.0;
-        let opacity = 0.45;
+        let weight = isTrafficFilter ? 2.2 : 1.5;
+        let opacity = isTrafficFilter ? 0.65 : 0.25;
 
         // If traffic flow is toggled on, show subtle operational status only
-        if (showTraffic) {
+        if (showTraffic && isTrafficFilter) {
           if (isFCRoad) {
-            color = '#dc2626'; // Incident corridor
+            color = isDiversionActive ? '#16a34a' : '#dc2626'; // Incident corridor vs Stabilized
             weight = 3.2;
-            opacity = 0.85;
+            opacity = 0.9;
           } else if (feature.id === 'RD-JM') {
-            color = '#d97706'; // Moderate / Attention
-            weight = 2.5;
-            opacity = 0.65;
+            color = isDiversionActive ? '#2563eb' : '#d97706'; // Diversion route vs Moderate
+            weight = 2.8;
+            opacity = 0.8;
           }
         }
 
@@ -67,7 +74,7 @@ export default function RouteOverlay({
               lineJoin: 'round'
             }}
             eventHandlers={{
-              click: () => onSelectRoad && onSelectRoad(feature.properties)
+              click: () => onSelectRoad && onSelectRoad({ ...feature.properties, category: 'traffic' })
             }}
           >
             <Tooltip sticky direction="top" className="text-xs font-sans">
@@ -76,13 +83,13 @@ export default function RouteOverlay({
             </Tooltip>
 
             <Popup className="gis-popup">
-              <div className="p-3 max-w-[240px] text-slate-800 text-xs select-none">
+              <div className="p-3 max-w-[250px] text-slate-800 text-xs select-none font-sans">
                 <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-                  <span className="font-mono text-[10px] font-bold text-slate-500 uppercase">
-                    ROAD CORRIDOR
+                  <span className="font-mono text-[9px] font-bold text-slate-700 uppercase bg-slate-100 px-1.5 py-0.5 rounded-xs border border-slate-200">
+                    {t('servicesList.traffic')}
                   </span>
                   <span className="text-[10px] font-mono text-slate-400">
-                    PUNE GIS
+                    {t('inspection.puneGis')}
                   </span>
                 </div>
 
@@ -100,16 +107,30 @@ export default function RouteOverlay({
                       <span className="font-medium text-slate-800">{feature.properties.lanes} Lanes</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Ward Jurisdiction:</span>
+                      <span className="text-slate-500">{t('inspection.ward')}:</span>
                       <span className="font-medium text-slate-800">{feature.properties.ward}</span>
                     </div>
-                    {feature.properties.transitUse && (
-                      <div className="text-[10px] text-slate-500 pt-0.5">
-                        <span className="font-semibold text-slate-700 block">Transit Alignment:</span>
-                        {feature.properties.transitUse}
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-slate-500">{t('inspection.status')}:</span>
+                      <span className={`font-semibold text-[10px] px-1.5 py-0.2 rounded border ${
+                        isFCRoad && !isDiversionActive ? 'bg-red-50 text-red-700 border-red-200' :
+                        isFCRoad && isDiversionActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        'bg-slate-50 text-slate-700 border-slate-200'
+                      }`}>
+                        {isFCRoad ? (isDiversionActive ? 'Stabilizing (44 km/h)' : 'Standstill (12 km/h)') : 'Normal Flow (38 km/h)'}
+                      </span>
+                    </div>
                   </div>
+
+                  {onViewService && (
+                    <button
+                      onClick={() => onViewService('traffic')}
+                      className="mt-2.5 w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[10px] py-1.5 px-2 rounded flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>{t('inspection.viewService')}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             </Popup>

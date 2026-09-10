@@ -14,6 +14,7 @@ import {
   Server, 
   FileText
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 export default function Sidebar({ 
   activeView, 
@@ -23,6 +24,7 @@ export default function Sidebar({
   servicesData,
   onNavigateToHome
 }) {
+  const { t } = useTranslation();
 
   const getServiceStatus = (serviceId) => {
     const s = servicesData?.find(item => item.id === serviceId);
@@ -30,25 +32,25 @@ export default function Sidebar({
   };
 
   const primaryItems = [
-    { id: 'map', label: 'City Operations', icon: Map },
-    { id: 'alerts', label: 'Incidents', icon: AlertTriangle, count: 1 },
-    { id: 'simulation', label: 'What-if Analysis', icon: Sparkles },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+    { id: 'map', label: t('nav.cityOperations'), icon: Map },
+    { id: 'alerts', label: t('nav.incidents'), icon: AlertTriangle, count: 1 },
+    { id: 'simulation', label: t('nav.whatIf'), icon: Sparkles },
+    { id: 'analytics', label: t('nav.analytics'), icon: BarChart3 }
   ];
 
   const serviceItems = [
-    { id: 'traffic', label: 'Traffic', icon: Car },
-    { id: 'emergency', label: 'Emergency', icon: ShieldAlert },
-    { id: 'transit', label: 'Transit', icon: Bus },
-    { id: 'water', label: 'Water', icon: Droplets },
-    { id: 'power', label: 'Power', icon: Zap },
-    { id: 'waste', label: 'Waste', icon: Recycle }
+    { id: 'traffic', label: t('nav.traffic'), icon: Car },
+    { id: 'emergency', label: t('nav.emergency'), icon: ShieldAlert },
+    { id: 'transit', label: t('nav.transit'), icon: Bus },
+    { id: 'water', label: t('nav.water'), icon: Droplets },
+    { id: 'power', label: t('nav.power'), icon: Zap },
+    { id: 'waste', label: t('nav.waste'), icon: Recycle }
   ];
 
   const systemItems = [
-    { id: 'architecture', label: 'Architecture', icon: Layers },
-    { id: 'health', label: 'Service Health', icon: Server },
-    { id: 'audit', label: 'Audit Log', icon: FileText }
+    { id: 'architecture', label: t('nav.architecture'), icon: Layers },
+    { id: 'health', label: t('nav.serviceHealth'), icon: Server },
+    { id: 'audit', label: t('nav.auditLog'), icon: FileText }
   ];
 
   return (
@@ -60,7 +62,7 @@ export default function Sidebar({
         {/* PRIMARY GROUP */}
         <div>
           <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            PRIMARY
+            {t('nav.primary')}
           </div>
           <div className="space-y-0.5" role="navigation" aria-label="Primary Navigation">
             {primaryItems.map((item) => {
@@ -98,7 +100,7 @@ export default function Sidebar({
         {/* SERVICES GROUP */}
         <div>
           <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            SERVICES
+            {t('nav.services')}
           </div>
           <div className="space-y-0.5" role="navigation" aria-label="Services Navigation">
             {serviceItems.map((item) => {
@@ -141,7 +143,7 @@ export default function Sidebar({
         {/* SYSTEM GROUP */}
         <div>
           <div className="px-2.5 mb-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            SYSTEM
+            {t('nav.system')}
           </div>
           <div className="space-y-0.5" role="navigation" aria-label="System Navigation">
             {systemItems.map((item) => {
@@ -178,7 +180,7 @@ export default function Sidebar({
             onClick={onNavigateToHome}
             className="font-medium text-[#2563A6] hover:underline cursor-pointer"
           >
-            ← Public Home
+            ← {t('app.publicHome')}
           </button>
         ) : (
           <span className="font-medium text-slate-600">Pune Node 01</span>
@@ -189,5 +191,3 @@ export default function Sidebar({
     </aside>
   );
 }
-
-

@@ -6,24 +6,32 @@ import { PUNE_FIRE_STATIONS_GEOJSON } from '../../data/geo/puneFireStations';
 import { PUNE_TRANSIT_GEOJSON } from '../../data/geo/puneTransit';
 import { PUNE_PARKS_GEOJSON } from '../../data/geo/puneParks';
 import { PUNE_WATER_INFRA_GEOJSON, PUNE_WASTE_FACILITIES_GEOJSON } from '../../data/geo/puneUtilities';
-import { ArrowRight } from 'lucide-react';
+import { PUNE_POWER_INFRA_GEOJSON } from '../../data/geo/punePowerInfra';
+import { ArrowRight, ExternalLink } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 export default function FacilityOverlay({
   layers,
   selectedObject,
   onSelectObject,
+  onViewService,
+  activeServiceFilter = 'all',
   zoomLevel = 13
 }) {
   const map = useMap();
+  const { t } = useTranslation();
 
   // Helper renderer with tiered Cartographic Level of Detail (LoD)
-  const renderFacility = (feature, type, minZoom = 11) => {
+  const renderFacility = (feature, type, domain, minZoom = 11) => {
     const isSelected = selectedObject?.id === feature.id;
 
     // Decluttering: filter out features that require a higher zoom level unless explicitly selected
     if (zoomLevel < minZoom && !isSelected) {
       return null;
     }
+
+    // Visual dimming if service filter is active and doesn't match this domain
+    const isDimmed = activeServiceFilter !== 'all' && activeServiceFilter !== domain;
 
     const [lng, lat] = feature.geometry.coordinates;
     const props = feature.properties;
@@ -34,8 +42,9 @@ export default function FacilityOverlay({
         key={feature.id}
         position={[lat, lng]}
         icon={icon}
+        opacity={isDimmed ? 0.35 : 1.0}
         eventHandlers={{
-          click: () => onSelectObject && onSelectObject({ ...props, lat, lng, type })
+          click: () => onSelectObject && onSelectObject({ ...props, lat, lng, type, domain })
         }}
       >
         <Tooltip 
@@ -48,20 +57,26 @@ export default function FacilityOverlay({
         </Tooltip>
 
         <Popup className="gis-popup">
-          <div className="p-3 max-w-[240px] text-slate-800 text-xs select-none">
+          <div className="p-3 max-w-[250px] text-slate-800 text-xs select-none font-sans">
             
-            {/* Header */}
-            <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-              <span className="font-mono text-[10px] font-bold uppercase text-slate-500">
-                {type === 'hospital' ? 'HOSPITAL' :
-                 type === 'fire_station' ? 'FIRE STATION' :
-                 type === 'transit' ? 'TRANSIT' :
-                 type === 'park' ? 'PARK / GREEN SPACE' :
-                 type === 'water_infra' ? 'WATER UTILITY' :
-                 type === 'waste_facility' ? 'WASTE FACILITY' : 'FACILITY'}
+            {/* Header with Domain Category */}
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+              <span className={`font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-xs border ${
+                domain === 'emergency' ? 'bg-red-50 text-red-700 border-red-200' :
+                domain === 'water' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                domain === 'power' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                domain === 'transit' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                domain === 'waste' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                'bg-slate-100 text-slate-700 border-slate-200'
+              }`}>
+                {domain === 'emergency' ? t('servicesList.emergency') :
+                 domain === 'water' ? t('servicesList.water') :
+                 domain === 'power' ? t('servicesList.power') :
+                 domain === 'transit' ? t('servicesList.transit') :
+                 domain === 'waste' ? t('servicesList.waste') : 'MUNICIPAL'}
               </span>
               <span className="font-mono text-[10px] text-slate-400 font-medium">
-                PUNE GIS
+                {t('inspection.puneGis')}
               </span>
             </div>
 
@@ -72,10 +87,11 @@ export default function FacilityOverlay({
               
               <div className="pt-1.5 space-y-1 text-[11px] text-slate-700 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Ward:</span>
+                  <span className="text-slate-500">{t('inspection.ward')}:</span>
                   <span className="font-medium text-slate-800">{props.ward}</span>
                 </div>
 
+                {/* Domain Specific Simulated Metrics */}
                 {props.capacityBeds && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Bed Capacity:</span>
@@ -86,7 +102,23 @@ export default function FacilityOverlay({
                 {props.capacityMLD && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Treatment Capacity:</span>
-                    <span className="font-semibold text-blue-700">{props.capacityMLD}</span>
+                    <span className="font-semibold text-sky-700">{props.capacityMLD}</span>
+                  </div>
+                )}
+
+                {props.voltageLevel && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Voltage / Feeders:</span>
+                    <span className="font-mono text-slate-800 font-semibold">{props.voltageLevel} ({props.feeders} Feeders)</span>
+                  </div>
+                )}
+
+                {props.simulatedLoad && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">{t('inspection.load')}:</span>
+                    <span className={`font-semibold ${parseInt(props.simulatedLoad) > 85 ? 'text-amber-700' : 'text-slate-800'}`}>
+                      {props.simulatedLoad}
+                    </span>
                   </div>
                 )}
 
@@ -111,35 +143,36 @@ export default function FacilityOverlay({
                   </div>
                 )}
 
-                {props.phone && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Contact:</span>
-                    <span className="font-mono text-slate-800">{props.phone}</span>
-                  </div>
-                )}
-
-                {props.location && (
-                  <div className="text-[10px] text-slate-500 pt-0.5">
-                    <span className="font-semibold text-slate-700">Location: </span>
-                    {props.location}
-                  </div>
-                )}
+                {/* Simulated Operating Status */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <span className="text-slate-500">{t('inspection.status')}:</span>
+                  <span className="font-semibold text-emerald-700 text-[10px] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                    {props.simulatedStatus || 'Normal Operations'}
+                  </span>
+                </div>
               </div>
 
-              {/* Action Button */}
-              <button
-                onClick={() => {
-                  map.setView([lat, lng], 16, { animate: true });
-                }}
-                className="mt-2.5 w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] py-1.5 px-2 rounded flex items-center justify-center space-x-1 transition-colors cursor-pointer"
-              >
-                <span>
-                  {type === 'hospital' ? 'VIEW ON MAP' : 
-                   type === 'fire_station' ? 'ZOOM TO FACILITY' : 
-                   'ZOOM TO LOCATION'}
-                </span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
+              {/* Action Buttons: [ZOOM] & [VIEW SERVICE] */}
+              <div className="pt-2 flex items-center space-x-1.5">
+                <button
+                  onClick={() => {
+                    map.setView([lat, lng], 16, { animate: true });
+                  }}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[10px] py-1 px-1.5 rounded flex items-center justify-center space-x-1 transition-colors cursor-pointer border border-slate-300"
+                >
+                  <span>{t('inspection.zoomToLocation')}</span>
+                  <ArrowRight className="w-2.5 h-2.5" />
+                </button>
+                {onViewService && domain && (
+                  <button
+                    onClick={() => onViewService(domain)}
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[10px] py-1 px-1.5 rounded flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+                  >
+                    <span>{t('inspection.viewService')}</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>
@@ -150,38 +183,43 @@ export default function FacilityOverlay({
 
   return (
     <>
-      {/* 1. Hospitals Layer: Major at Zoom 11+, Secondary at Zoom 13+ */}
+      {/* 1. Hospitals (Emergency): Major at Zoom 11+, Secondary at Zoom 13+ */}
       {layers.hospitals && PUNE_HOSPITALS_GEOJSON.features.map(f => 
-        renderFacility(f, 'hospital', f.properties.isMajorFacility ? 11 : 13)
+        renderFacility(f, 'hospital', 'emergency', f.properties.isMajorFacility ? 11 : 13)
       )}
 
-      {/* 2. Fire Stations Layer: Major at Zoom 11+, Secondary at Zoom 13+ */}
+      {/* 2. Fire Stations (Emergency): Major at Zoom 11+, Secondary at Zoom 13+ */}
       {layers.fireStations && PUNE_FIRE_STATIONS_GEOJSON.features.map(f => 
-        renderFacility(f, 'fire_station', f.properties.isMajorFacility ? 11 : 13)
+        renderFacility(f, 'fire_station', 'emergency', f.properties.isMajorFacility ? 11 : 13)
       )}
 
-      {/* 3. Transit Layer: Major Hubs at Zoom 11+, Metro Stations at Zoom 13+, Local Stops at Zoom 15+ */}
+      {/* 3. Transit (Transit): Major Hubs at Zoom 11+, Metro Stations at Zoom 13+, Local Stops at Zoom 15+ */}
       {layers.transit && PUNE_TRANSIT_GEOJSON.features.map(f => {
         const isHub = f.properties.isMajorHub;
         const isMetro = f.id.includes('METRO');
         const minZoom = isHub ? 11 : (isMetro ? 13 : 15);
-        return renderFacility(f, 'transit', minZoom);
+        return renderFacility(f, 'transit', 'transit', minZoom);
       })}
 
-      {/* 4. Parks & Public Gardens: Prominent at Zoom 13+ */}
-      {layers.parks && PUNE_PARKS_GEOJSON.features.map(f => 
-        renderFacility(f, 'park', 13)
+      {/* 4. Power Infrastructure (Power): High-voltage substations at Zoom 11+ */}
+      {layers.powerInfra && PUNE_POWER_INFRA_GEOJSON.features.map(f => 
+        renderFacility(f, 'power', 'power', 11)
       )}
 
-      {/* 5. Water Infrastructure: Major WTP at Zoom 11+, STPs at Zoom 13+ */}
+      {/* 5. Water Infrastructure (Water): Major WTP at Zoom 11+, STPs at Zoom 13+ */}
       {layers.waterInfra && PUNE_WATER_INFRA_GEOJSON.features.map(f => {
         const isParvati = f.id === 'UTIL-WATER-PARVATI';
-        return renderFacility(f, 'water_infra', isParvati ? 11 : 13);
+        return renderFacility(f, 'water_infra', 'water', isParvati ? 11 : 13);
       })}
 
-      {/* 6. Solid Waste Facilities: Main Hubs at Zoom 13+, Local Posts at Zoom 15+ */}
+      {/* 6. Solid Waste Facilities (Waste): Main Hubs at Zoom 13+, Local Posts at Zoom 15+ */}
       {layers.wasteFacilities && PUNE_WASTE_FACILITIES_GEOJSON.features.map(f => 
-        renderFacility(f, 'waste_facility', 13)
+        renderFacility(f, 'waste_facility', 'waste', 13)
+      )}
+
+      {/* 7. Parks & Public Gardens: Prominent at Zoom 13+ */}
+      {layers.parks && PUNE_PARKS_GEOJSON.features.map(f => 
+        renderFacility(f, 'park', 'waste', 13)
       )}
     </>
   );

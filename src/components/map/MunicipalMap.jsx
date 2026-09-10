@@ -8,6 +8,7 @@ import FacilityOverlay from './FacilityOverlay';
 import MapControls from './MapControls';
 import MapLegend from './MapLegend';
 import MapLayers from './MapLayers';
+import ServiceQuickFilter from './ServiceQuickFilter';
 
 // Map View Syncer Component
 function MapViewController({ selectedObject }) {
@@ -48,6 +49,9 @@ export default function MunicipalMap({
   selectedObject,
   onSelectObject,
   onOpenActionPanel,
+  onViewService,
+  activeServiceFilter = 'all',
+  onSelectServiceFilter,
   isResolved,
   onLayerToggle
 }) {
@@ -58,11 +62,17 @@ export default function MunicipalMap({
   return (
     <div className="w-full h-full relative bg-slate-100 overflow-hidden select-none">
       
-      {/* Small White Floating Layer Control */}
+      {/* Floating Layer Control at Top-Left */}
       <MapLayers layers={layers} setLayers={setLayers} onLayerToggle={onLayerToggle} />
 
+      {/* Compact Service Quick Filter Tabs (ALL | TRAFFIC | EMERGENCY | TRANSIT | WATER | POWER | WASTE) */}
+      <ServiceQuickFilter 
+        activeFilter={activeServiceFilter} 
+        onSelectFilter={onSelectServiceFilter} 
+      />
+
       {/* Dynamic GIS Legend at Bottom-Left */}
-      <MapLegend layers={layers} />
+      <MapLegend layers={layers} activeServiceFilter={activeServiceFilter} />
 
       {/* Leaflet Map Container */}
       <MapContainer
@@ -91,6 +101,8 @@ export default function MunicipalMap({
           showWaterBodies={layers.waterBodies}
           selectedWard={selectedObject?.type === 'ward' || selectedObject?.wardNo ? selectedObject : null}
           onSelectWard={(ward) => onSelectObject({ ...ward, type: 'ward' })}
+          onViewService={onViewService}
+          activeServiceFilter={activeServiceFilter}
           zoomLevel={zoomLevel}
         />
 
@@ -100,15 +112,19 @@ export default function MunicipalMap({
           showTraffic={layers.traffic}
           selectedRoad={selectedObject?.class ? selectedObject : null}
           onSelectRoad={(rd) => onSelectObject(rd)}
+          onViewService={onViewService}
+          activeServiceFilter={activeServiceFilter}
           isDiversionActive={isResolved || layers.diversionRoutes}
           isIncidentSelected={isIncidentSelected}
         />
 
-        {/* Real Pune Municipal Infrastructure Assets (Hospitals, Fire Stations, Transit, Parks, Utilities) */}
+        {/* Real Pune Municipal Infrastructure Assets (Hospitals, Fire Stations, Transit, Power, Water, Waste, Parks) */}
         <FacilityOverlay
           layers={layers}
           selectedObject={selectedObject}
           onSelectObject={(obj) => onSelectObject(obj)}
+          onViewService={onViewService}
+          activeServiceFilter={activeServiceFilter}
           zoomLevel={zoomLevel}
         />
 

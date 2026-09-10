@@ -8,3 +8,4 @@ export * from './puneFireStations';
 export * from './puneTransit';
 export * from './puneParks';
 export * from './puneUtilities';
+export * from './punePowerInfra';
