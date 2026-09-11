@@ -117,7 +117,10 @@ export const mr = {
     inspect: "तपासा",
     resolved: "डायव्हर्जन सक्रिय",
     resolvedSubtext: "नियम DIV-R-8842 लागू • वाहतूक कॉरिडोअर सुरळीत होत आहे",
-    diversionRoute: "FC Road → JM Road → Shivaji Road"
+    diversionRoute: "FC Road → JM Road → Shivaji Road",
+    trafficStabilizing: "वाहतूक सुरळीत होत आहे",
+    transitRerouting: "वाहतूक मार्ग बदल",
+    dismiss: "बंद करा"
   },
 
   // Sidebar navigation

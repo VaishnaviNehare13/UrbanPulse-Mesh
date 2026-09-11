@@ -117,7 +117,10 @@ export const hi = {
     inspect: "निरीक्षण करें",
     resolved: "डायवर्जन सक्रिय",
     resolvedSubtext: "नियम DIV-R-8842 लागू • यातायात गलियारा स्थिर हो रहा है",
-    diversionRoute: "FC Road → JM Road → Shivaji Road"
+    diversionRoute: "FC Road → JM Road → Shivaji Road",
+    trafficStabilizing: "यातायात स्थिर हो रहा है",
+    transitRerouting: "मार्ग परिवर्तन",
+    dismiss: "खारिज करें"
   },
 
   // Sidebar navigation

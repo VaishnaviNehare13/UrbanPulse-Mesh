@@ -117,7 +117,10 @@ export const en = {
     inspect: "INSPECT",
     resolved: "DIVERSION ACTIVE",
     resolvedSubtext: "Rule DIV-R-8842 applied • Traffic corridor stabilizing",
-    diversionRoute: "FC Road → JM Road → Shivaji Road"
+    diversionRoute: "FC Road → JM Road → Shivaji Road",
+    trafficStabilizing: "Traffic stabilizing",
+    transitRerouting: "Transit rerouting",
+    dismiss: "Dismiss"
   },
 
   // Sidebar navigation
